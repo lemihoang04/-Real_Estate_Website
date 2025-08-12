@@ -9,37 +9,87 @@ use App\Http\Requests\PropertyRequest;
 class PropertyController extends Controller
 {
     public function index(Request $request)
-    {
-        $query = Property::query();
+{
+    $query = Property::with('images');
 
-        if ($request->city) $query->where('city', $request->city);
-        if ($request->status) $query->where('status', $request->status);
-        if ($request->min_price) $query->where('price', '>=', $request->min_price);
-        if ($request->max_price) $query->where('price', '<=', $request->max_price);
-
-        if ($request->sort && $request->order) {
-            $query->orderBy($request->sort, $request->order);
-        }
-
-        return $query->paginate(10);
+    if ($request->has('city')) {
+        $query->where('city', $request->city);
     }
+
+    if ($request->has('status')) {
+        $query->where('status', $request->status);
+    }
+
+    if ($request->has('min_price')) {
+        $query->where('price', '>=', $request->min_price);
+    }
+
+    if ($request->has('max_price')) {
+        $query->where('price', '<=', $request->max_price);
+    }
+
+    $sort = $request->get('sort', 'id');
+    $order = $request->get('order', 'asc'); 
+    $query->orderBy($sort, $order);
+
+    $perPage = $request->get('per_page', 10);
+    $properties = $query->paginate($perPage);
+
+    $data = $properties->getCollection()->transform(function ($property) {
+        return [
+            'id'     => $property->id,
+            'title'  => $property->title,
+            'price'  => $property->price,
+            'city'   => $property->city,
+            'status' => $property->status,
+            'images' => $property->images()->get()->map(function ($img) {
+            return [
+                'id'         => $img->id,
+                'image_path' => $img->image_path,
+                'is_primary' => $img->is_primary
+            ];
+})
+        ];
+    });
+
+    return response()->json([
+        'data' => $data,
+        'meta' => [
+            'current_page' => $properties->currentPage(),
+            'last_page'    => $properties->lastPage(),
+            'total'        => $properties->total()
+        ]
+    ]);
+}
 
     public function store(PropertyRequest $request)
-    {
-        $property = Property::create($request->validated());
+{
+    $property = Property::create($request->validated());
 
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $file) {
-                $path = $file->store('properties', 'public');
-                $property->images()->create([
-                    'image_path' => "/storage/$path",
-                    'image_name' => $file->getClientOriginalName()
-                ]);
-            }
+    if ($request->hasFile('images')) {
+        $imageArray = [];
+        foreach ($request->file('images') as $index => $file) {
+            $path = $file->store('properties', 'public');
+            $isPrimary = ($index === 0); 
+            $property->images()->create([
+                'image_path' => "/storage/$path",
+                'image_name' => $file->getClientOriginalName(),
+                'is_primary' => $isPrimary
+            ]);
+            $imageArray[] = [
+                'image_path' => "/storage/$path",
+                'is_primary' => $isPrimary
+            ];
         }
 
-        return response()->json(['message' => 'Property created successfully', 'data' => $property]);
+        $property->update(['images' => json_encode($imageArray)]);
     }
+
+    return response()->json([
+        'message' => 'Property created successfully',
+        'data' => $property->load('images') 
+    ]);
+}
 
     public function show($id)
     {
