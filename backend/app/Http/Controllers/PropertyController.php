@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Property;
+use App\Http\Requests\PropertyRequest;
 
 class PropertyController extends Controller
 {
@@ -11,13 +12,11 @@ class PropertyController extends Controller
     {
         $query = Property::query();
 
-        // Filter
         if ($request->city) $query->where('city', $request->city);
         if ($request->status) $query->where('status', $request->status);
         if ($request->min_price) $query->where('price', '>=', $request->min_price);
         if ($request->max_price) $query->where('price', '<=', $request->max_price);
 
-        // Sort
         if ($request->sort && $request->order) {
             $query->orderBy($request->sort, $request->order);
         }
@@ -29,7 +28,6 @@ class PropertyController extends Controller
     {
         $property = Property::create($request->validated());
 
-        // Upload ảnh nếu có
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
                 $path = $file->store('properties', 'public');

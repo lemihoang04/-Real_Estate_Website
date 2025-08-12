@@ -15,18 +15,15 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
 
-    // Đăng xuất
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // CRUD Bất động sản
-    Route::get('/properties', [PropertyController::class, 'index']);      // Danh sách + search/filter/sort/pagination
-    Route::post('/properties', [PropertyController::class, 'store']);     // Thêm mới
-    Route::get('/properties/{id}', [PropertyController::class, 'show']);  // Xem chi tiết
-    Route::put('/properties/{id}', [PropertyController::class, 'update']); // Sửa
-    Route::delete('/properties/{id}', [PropertyController::class, 'destroy']); // Xóa mềm
-    Route::post('/properties/{id}/restore', [PropertyController::class, 'restore']); // Khôi phục
+    Route::get('/properties', [PropertyController::class, 'index']);      
+    Route::post('/properties', [PropertyController::class, 'store']);     
+    Route::get('/properties/{id}', [PropertyController::class, 'show']);  
+    Route::put('/properties/{id}', [PropertyController::class, 'update']); 
+    Route::delete('/properties/{id}', [PropertyController::class, 'destroy']); 
+    Route::post('/properties/{id}/restore', [PropertyController::class, 'restore']); 
 
-    // CRUD ảnh bất động sản
-    Route::post('/properties/{id}/images', [PropertyImageController::class, 'store']); // Thêm ảnh
-    Route::delete('/properties/{id}/images/{image_id}', [PropertyImageController::class, 'destroy']); // Xóa ảnh
+    Route::post('/properties/{id}/images', [PropertyImageController::class, 'store']); 
+    Route::delete('/properties/{id}/images/{image_id}', [PropertyImageController::class, 'destroy']);
 });

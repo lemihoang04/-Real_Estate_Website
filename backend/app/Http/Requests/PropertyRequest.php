@@ -22,13 +22,17 @@ class PropertyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
-            'area' => 'required|numeric|min:0',
-            'city' => 'required|string|max:100',
-            'district' => 'required|string|max:100',
-            'status' => 'required|in:available,sold,rented,pending',
-            'images.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
+            'title'         => 'required|string|max:255',
+            'property_type' => 'required|string',
+            'status'        => 'required|string',
+            'price'         => 'required|numeric|min:0',
+            'area'          => 'required|numeric|min:0',
+            'address'       => 'required|string',
+            'city'          => 'required|string',
+            'district'      => 'required|string',
+            'contact_name'  => 'required|string',
+            'contact_phone' => 'required|string',
+            'images.*'      => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
     }
 }
