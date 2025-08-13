@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../app/store';
+import { createProperty } from '../../services/apiService';
+import { toast } from 'react-toastify';
 
 interface PropertyFormData {
     title: string;
@@ -115,16 +117,20 @@ const AddProperty: React.FC = () => {
                 submitData.append(key, value.toString());
             });
 
-            images.forEach((image, index) => {
-                submitData.append(`images`, image);
+            images.forEach((image) => {
+                submitData.append('images[]', image); // key must be images[], type is File
             });
 
             // API call would go here
             console.log('Form data:', formData);
             console.log('Images:', images);
+            try {
+                const response = await createProperty(submitData);
+                console.log('Property created successfully:', response);
+            } catch (error) {
+                console.error('Error creating property:', error);
+            }
 
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
 
             alert('Property added successfully!');
             navigate('/properties');
@@ -372,6 +378,7 @@ const AddProperty: React.FC = () => {
                                         <input
                                             type="file"
                                             className="form-control"
+                                            name="images[]"
                                             multiple
                                             accept="image/*"
                                             onChange={handleImageChange}

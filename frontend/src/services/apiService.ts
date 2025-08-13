@@ -12,7 +12,11 @@ const getProperties = async () => {
 
 const createProperty = async (propertyData: any) => {
     try {
-        const response = await api.post("/properties", propertyData);
+        const response = await api.post("/properties", propertyData, {
+            headers: {
+                Accept: "application/json",
+            },
+        });
         return response;
     } catch (error) {
         console.error("Error creating property:", error);
