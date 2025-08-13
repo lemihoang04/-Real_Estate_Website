@@ -1,11 +1,16 @@
 import axios from "../setup/axios";
 
 
-const LoginService = (data: Record<string, any>) => {
+const LoginService = (data: Record<string, any>): Promise<any> => {
     return axios
-        .post("/login", data)
+        .post("/login", data, {
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        })
         .then((response) => {
-            return response.data;
+            console.log("Login response1:", response);
+            return response;
         })
         .catch((error) => {
             console.error("Login error:", error);

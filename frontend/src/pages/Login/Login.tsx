@@ -4,7 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { Link, useNavigate } from 'react-router-dom';
 import { LoginService } from '../../services/userService';
 import { useDispatch } from "react-redux";
-import { setToken } from "../../features/auth/authSlice";
+import { setCredentials } from "../../features/auth/authSlice";
 
 const Login: React.FC = () => {
     const [formData, setFormData] = useState({
@@ -13,6 +13,7 @@ const Login: React.FC = () => {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
@@ -30,16 +31,20 @@ const Login: React.FC = () => {
 
         try {
             const response = await LoginService(formData);
-            if (response.token) {
-                dispatch(setToken(response.token));
+            if (response.success && response.token) {
+                dispatch(setCredentials({ token: response.token, user: response.user }));
+                toast.success('Login successful!');
                 navigate('/');
             } else {
-                toast.error(response.error);
+                const errorMessage = response.message || 'Login failed';
+                setError(errorMessage);
+                toast.error(errorMessage);
             }
-
-
-        } catch (err) {
-            setError('Invalid email or password');
+        } catch (err: any) {
+            console.error('Login error:', err);
+            const errorMessage = err.message || 'Invalid email or password';
+            setError(errorMessage);
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -81,7 +86,7 @@ const Login: React.FC = () => {
                                     <div className="mb-3">
                                         <label htmlFor="password" className="form-label">Password</label>
                                         <input
-                                            type="password"
+                                            type={showPassword ? "text" : "password"}
                                             className="form-control"
                                             id="password"
                                             name="password"
@@ -96,10 +101,12 @@ const Login: React.FC = () => {
                                         <input
                                             type="checkbox"
                                             className="form-check-input"
-                                            id="rememberMe"
+                                            id="showPassword"
+                                            checked={showPassword}
+                                            onChange={(e) => setShowPassword(e.target.checked)}
                                         />
-                                        <label className="form-check-label" htmlFor="rememberMe">
-                                            Remember me
+                                        <label className="form-check-label" htmlFor="showPassword">
+                                            Show password
                                         </label>
                                     </div>
 
@@ -118,18 +125,6 @@ const Login: React.FC = () => {
                                         )}
                                     </button>
                                 </form>
-
-                                <hr className="my-4" />
-
-                                <div className="text-center">
-                                    <a href="#" className="small text-decoration-none">Forgot Password?</a>
-                                </div>
-
-                                <div className="text-center mt-3">
-                                    <Link to="/" className="small text-decoration-none">
-                                        ← Back to Dashboard
-                                    </Link>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -138,5 +133,6 @@ const Login: React.FC = () => {
         </div>
     );
 };
+
 
 export default Login;
