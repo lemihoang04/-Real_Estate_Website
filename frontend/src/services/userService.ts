@@ -3,9 +3,9 @@ import axios from "../setup/axios";
 
 const LoginService = (data: Record<string, any>) => {
     return axios
-        .post("/login", data) // chỉ cần /login
+        .post("/login", data)
         .then((response) => {
-            return response.data; // trả về JSON
+            return response.data;
         })
         .catch((error) => {
             console.error("Login error:", error);

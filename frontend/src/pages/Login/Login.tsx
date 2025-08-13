@@ -36,7 +36,7 @@ const Login: React.FC = () => {
             } else {
                 toast.error(response.error);
             }
-            // On success, redirect to dashboard
+
 
         } catch (err) {
             setError('Invalid email or password');
