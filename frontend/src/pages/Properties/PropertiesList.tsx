@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { getProperties } from '../../services/apiService';
 
 interface Property {
     id: number;
     title: string;
     price: number;
-    type: string;
+    property_type: string;
     status: string;
-    location: string;
+    city: string;
     bedrooms: number;
     bathrooms: number;
     area: number;
@@ -33,41 +34,40 @@ const PropertiesList: React.FC = () => {
 
     // Search and filter states
     const [searchTerm, setSearchTerm] = useState('');
-    const [typeFilter, setTypeFilter] = useState('');
+    const [cityFilter, setCityFilter] = useState(''); // replace typeFilter with cityFilter
     const [statusFilter, setStatusFilter] = useState('');
     const [priceRange, setPriceRange] = useState({ min: '', max: '' });
-    const [sortBy, setSortBy] = useState('createdAt');
+    const [sortBy, setSortBy] = useState('created_at');
     const [sortOrder, setSortOrder] = useState('desc');
 
     // Fetch properties with query params
     const fetchProperties = async () => {
         setLoading(true);
         try {
-            const params = new URLSearchParams({
-                page: pagination.currentPage.toString(),
-                limit: pagination.itemsPerPage.toString(),
-                search: searchTerm,
-                type: typeFilter,
+            const params: Record<string, any> = {
+                page: pagination.currentPage,
+                city: cityFilter,
                 status: statusFilter,
-                minPrice: priceRange.min,
-                maxPrice: priceRange.max,
-                sortBy,
-                sortOrder
-            });
-
+                min_price: priceRange.min,
+                max_price: priceRange.max,
+                sort: sortBy,
+                order: sortOrder,
+                per_page: pagination.itemsPerPage // thêm per_page vào params
+            };
             // Remove empty params
-            Object.keys(Object.fromEntries(params)).forEach(key => {
-                if (!params.get(key)) params.delete(key);
+            Object.keys(params).forEach(key => {
+                if (!params[key]) delete params[key];
             });
 
-            const response = await fetch(`/api/properties?${params}`);
-            const data = await response.json();
+            const response = await getProperties(params);
+            const data = response.data;
 
-            setProperties(data.properties);
+            setProperties(data.data);
+            console.log('Fetched properties:', data); // Debugging log
             setPagination(prev => ({
                 ...prev,
-                totalPages: data.totalPages,
-                totalItems: data.totalItems
+                totalPages: data.meta.last_page,
+                totalItems: data.meta.total
             }));
         } catch (error) {
             console.error('Error fetching properties:', error);
@@ -78,7 +78,7 @@ const PropertiesList: React.FC = () => {
 
     useEffect(() => {
         fetchProperties();
-    }, [pagination.currentPage, searchTerm, typeFilter, statusFilter, priceRange, sortBy, sortOrder]);
+    }, [pagination.currentPage]); // update deps
 
     const handlePageChange = (page: number) => {
         setPagination(prev => ({ ...prev, currentPage: page }));
@@ -92,10 +92,10 @@ const PropertiesList: React.FC = () => {
 
     const resetFilters = () => {
         setSearchTerm('');
-        setTypeFilter('');
+        setCityFilter(''); // reset city
         setStatusFilter('');
         setPriceRange({ min: '', max: '' });
-        setSortBy('createdAt');
+        setSortBy('created_at');
         setSortOrder('desc');
         setPagination(prev => ({ ...prev, currentPage: 1 }));
     };
@@ -124,18 +124,14 @@ const PropertiesList: React.FC = () => {
                                     />
                                 </div>
                                 <div className="col-md-2">
-                                    <label className="form-label">Type</label>
-                                    <select
-                                        className="form-select"
-                                        value={typeFilter}
-                                        onChange={(e) => setTypeFilter(e.target.value)}
-                                    >
-                                        <option value="">All Types</option>
-                                        <option value="house">House</option>
-                                        <option value="apartment">Apartment</option>
-                                        <option value="condo">Condo</option>
-                                        <option value="land">Land</option>
-                                    </select>
+                                    <label className="form-label">City</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="City"
+                                        value={cityFilter}
+                                        onChange={(e) => setCityFilter(e.target.value)}
+                                    />
                                 </div>
                                 <div className="col-md-2">
                                     <label className="form-label">Status</label>
@@ -195,7 +191,7 @@ const PropertiesList: React.FC = () => {
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}
                         >
-                            <option value="createdAt">Date Created</option>
+                            <option value="created_at">Date Created</option>
                             <option value="price">Price</option>
                             <option value="title">Title</option>
                             <option value="area">Area</option>
@@ -248,7 +244,7 @@ const PropertiesList: React.FC = () => {
                                                 <td>{property.id}</td>
                                                 <td>{property.title}</td>
                                                 <td>
-                                                    <span className="badge bg-secondary">{property.type}</span>
+                                                    <span className="badge bg-secondary">{property.property_type}</span>
                                                 </td>
                                                 <td>${property.price.toLocaleString()}</td>
                                                 <td>
@@ -258,7 +254,7 @@ const PropertiesList: React.FC = () => {
                                                         {property.status}
                                                     </span>
                                                 </td>
-                                                <td>{property.location}</td>
+                                                <td>{property.city}</td>
                                                 <td>{property.bedrooms}</td>
                                                 <td>{property.bathrooms}</td>
                                                 <td>{property.area}</td>
@@ -324,4 +320,6 @@ const PropertiesList: React.FC = () => {
     );
 };
 
+
 export default PropertiesList;
+

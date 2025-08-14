@@ -1,11 +1,21 @@
 import api from "../setup/api";
 
-const getProperties = async () => {
+const getProperties = async (params?: Record<string, any>): Promise<any> => {
     try {
-        const response = await api.get("/properties");
+        const response = await api.get("/properties", { params });
         return response;
     } catch (error) {
         console.error("Error fetching properties:", error);
+        throw error;
+    }
+};
+
+const getPropertyById = async (id: number): Promise<any> => {
+    try {
+        const response = await api.get(`/properties/${id}`);
+        return response;
+    } catch (error) {
+        console.error("Error fetching property:", error);
         throw error;
     }
 };
@@ -24,4 +34,4 @@ const createProperty = async (propertyData: any) => {
     }
 };
 
-export { getProperties, createProperty };
+export { getProperties, createProperty, getPropertyById };

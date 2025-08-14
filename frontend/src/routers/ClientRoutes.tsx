@@ -5,7 +5,7 @@ import PropertiesList from "../pages/Properties/PropertiesList";
 import Login from "../pages/Login/Login";
 import ProtectedRoute from "./ProtectedRoute";
 import AddProperty from "../pages/Properties/AddProperty";
-
+import PropertyDetail from "../pages/Properties/PropertyDetail";
 
 const ClientRoutes = () => {
     return (
@@ -36,6 +36,16 @@ const ClientRoutes = () => {
                             </ProtectedRoute>
                         }
                     />
+
+                    <Route
+                        path="/properties/:id"
+                        element={
+                            <ProtectedRoute>
+                                <PropertyDetail />
+                            </ProtectedRoute>
+                        }
+                    />
+
                 </Route>
                 <Route path="/login" element={<Login />} />
             </Routes>
