@@ -40,8 +40,12 @@ class PropertyController extends Controller
             'id'     => $property->id,
             'title'  => $property->title,
             'price'  => $property->price,
+            'property_type' => $property->property_type,
             'city'   => $property->city,
             'status' => $property->status,
+            'area'   => $property->area,
+            'bedrooms' => $property->bedrooms,
+            'bathrooms' => $property->bathrooms,
             'images' => $property->images()->get()->map(function ($img) {
             return [
                 'id'         => $img->id,
