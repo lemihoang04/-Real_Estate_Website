@@ -22,6 +22,7 @@ const getPropertyById = async (id: number): Promise<any> => {
 
 const createProperty = async (propertyData: any) => {
     try {
+        console.log("propertyData:", propertyData);
         const response = await api.post("/properties", propertyData, {
             headers: {
                 Accept: "application/json",
@@ -34,4 +35,39 @@ const createProperty = async (propertyData: any) => {
     }
 };
 
-export { getProperties, createProperty, getPropertyById };
+const updateProperty = async (id: number, propertyData: any) => {
+    try {
+        console.log("propertyData:", propertyData);
+        const response = await api.put(`/properties/${id}`, propertyData, {
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        });
+        return response;
+    } catch (error) {
+        console.error("Error updating property:", error);
+        throw error;
+    }
+};
+
+const softDeleteProperty = async (id: number) => {
+    try {
+        const response = await api.delete(`/properties/${id}`);
+        return response;
+    } catch (error) {
+        console.error("Error soft deleting property:", error);
+        throw error;
+    }
+};
+
+const restoreProperty = async (id: number) => {
+    try {
+        const response = await api.put(`/properties/${id}/restore`);
+        return response;
+    } catch (error) {
+        console.error("Error restoring property:", error);
+        throw error;
+    }
+};
+export { getProperties, createProperty, getPropertyById, updateProperty, softDeleteProperty, restoreProperty };

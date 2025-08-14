@@ -122,7 +122,6 @@ const PropertyDetail: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Property Information */}
                 <div className="col-lg-4">
                     <div className="card">
                         <div className="card-header">
@@ -174,7 +173,6 @@ const PropertyDetail: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Contact Information */}
                     <div className="card mt-3">
                         <div className="card-header">
                             <h5 className="mb-0">Contact Information</h5>
@@ -216,7 +214,6 @@ const PropertyDetail: React.FC = () => {
                 </div>
             </div>
 
-            {/* Location Information */}
             <div className="row mt-4">
                 <div className="col-12">
                     <div className="card">

@@ -6,6 +6,7 @@ import Login from "../pages/Login/Login";
 import ProtectedRoute from "./ProtectedRoute";
 import AddProperty from "../pages/Properties/AddProperty";
 import PropertyDetail from "../pages/Properties/PropertyDetail";
+import UpdateProperty from "../pages/Properties/UpdateProperty";
 
 const ClientRoutes = () => {
     return (
@@ -46,6 +47,14 @@ const ClientRoutes = () => {
                         }
                     />
 
+                    <Route
+                        path="/properties/:id/edit"
+                        element={
+                            <ProtectedRoute>
+                                <UpdateProperty />
+                            </ProtectedRoute>
+                        }
+                    />
                 </Route>
                 <Route path="/login" element={<Login />} />
             </Routes>

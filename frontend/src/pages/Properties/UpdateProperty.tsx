@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { getPropertyById } from '../../services/apiService';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../app/store';
+import { updateProperty, getPropertyById } from '../../services/apiService';
+import { toast } from 'react-toastify';
 
-interface Image {
-    image_path: string;
-    image_name: string;
-    is_primary: boolean;
-}
-
-interface PropertyData {
+interface PropertyFormData {
     title: string;
     description: string;
     property_type: string;
@@ -26,229 +23,526 @@ interface PropertyData {
     longitude: number;
     year_built: number;
     features: string;
-    images: Image[];
     contact_name: string;
     contact_phone: string;
     contact_email: string;
+    updated_by: string;
 }
 
-const PropertyDetail: React.FC = () => {
+const UpdateProperty: React.FC = () => {
+    const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
-    const [selectedImage, setSelectedImage] = useState<string>('');
-    const [property, setProperty] = useState<PropertyData | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
+    const { user } = useSelector((state: RootState) => state.auth);
+
+    const [formData, setFormData] = useState<PropertyFormData>({
+        title: '',
+        description: '',
+        property_type: '',
+        status: 'available',
+        price: 0,
+        area: 0,
+        bedrooms: 0,
+        bathrooms: 0,
+        floors: 1,
+        address: '',
+        city: '',
+        district: '',
+        postal_code: '',
+        latitude: 0,
+        longitude: 0,
+        year_built: new Date().getFullYear(),
+        features: '',
+        contact_name: '',
+        contact_phone: '',
+        contact_email: '',
+        updated_by: ''
+    });
+
+    const [newImages, setNewImages] = useState<File[]>([]);
+    const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+    const [existingImages, setExistingImages] = useState<string[]>([]);
+    const [imagesToDelete, setImagesToDelete] = useState<number[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [initialLoading, setInitialLoading] = useState(true);
 
     useEffect(() => {
-        const fetchProperty = async () => {
-            if (!id) {
-                setError('Property ID is required');
-                setLoading(false);
-                return;
-            }
+        if (user?.id) {
+            setFormData(prev => ({
+                ...prev,
+                updated_by: user.id.toString()
+            }));
+        }
+    }, [user]);
+
+    useEffect(() => {
+        const loadProperty = async () => {
+            if (!id) return;
 
             try {
-                setLoading(true);
-                const data = await getPropertyById(parseInt(id));
-                console.log('Fetched property:', data.data);
-                setProperty(data.data);
-                setError(null);
-            } catch (err) {
-                setError('Failed to load property details');
-                console.error('Error fetching property:', err);
+                setInitialLoading(true);
+                const response = await getPropertyById(Number(id));
+                const property = response.data;
+
+                setFormData({
+                    title: property.title || '',
+                    description: property.description || '',
+                    property_type: property.property_type || '',
+                    status: property.status || 'available',
+                    price: property.price || 0,
+                    area: property.area || 0,
+                    bedrooms: property.bedrooms || 0,
+                    bathrooms: property.bathrooms || 0,
+                    floors: property.floors || 1,
+                    address: property.address || '',
+                    city: property.city || '',
+                    district: property.district || '',
+                    postal_code: property.postal_code || '',
+                    latitude: property.latitude || 0,
+                    longitude: property.longitude || 0,
+                    year_built: property.year_built || new Date().getFullYear(),
+                    features: property.features || '',
+                    contact_name: property.contact_name || '',
+                    contact_phone: property.contact_phone || '',
+                    contact_email: property.contact_email || '',
+                    updated_by: user?.id?.toString() || ''
+                });
+
+                // Add base URL to existing images using image_path
+                const imagesWithBaseUrl = (property.images || []).map((image: any) => {
+                    return `http://localhost:8000${image.image_path}`;
+                });
+                setExistingImages(imagesWithBaseUrl);
+            } catch (error) {
+                console.error('Error loading property:', error);
+                toast.error('Error loading property data');
+                navigate('/properties');
             } finally {
-                setLoading(false);
+                setInitialLoading(false);
             }
         };
 
-        fetchProperty();
-    }, [id]);
+        loadProperty();
+    }, [id, user, navigate]);
 
-    if (loading) {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleNewImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        setNewImages(prev => [...prev, ...files]);
+
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                setNewImagePreviews(prev => [...prev, event.target?.result as string]);
+            };
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const removeNewImage = (index: number) => {
+        setNewImages(prev => prev.filter((_, i) => i !== index));
+        setNewImagePreviews(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const removeExistingImage = (index: number) => {
+        setImagesToDelete(prev => [...prev, index]);
+        setExistingImages(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!id) return;
+
+        setLoading(true);
+
+        try {
+            const submitData = {
+                ...formData,
+                updated_by: user?.id?.toString() || '',
+                images_to_delete: imagesToDelete.length > 0 ? imagesToDelete : undefined
+            };
+
+            // Remove undefined values
+            // Object.keys(submitData).forEach(key => {
+            //     if (submitData[key] === undefined) {
+            //         delete submitData[key];
+            //     }
+            // });
+
+            const response = await updateProperty(Number(id), submitData);
+            toast.success('Property updated successfully!');
+            navigate('/properties');
+        } catch (error) {
+            console.error('Error updating property:', error);
+            toast.error('Error updating property');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (initialLoading) {
         return (
-            <div className="container mt-4">
-                <div className="text-center">
-                    <div className="spinner-border" role="status">
-                        <span className="visually-hidden">Loading...</span>
+            <div className="container-fluid py-4">
+                <div className="row">
+                    <div className="col-12 text-center">
+                        <div className="spinner-border" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                        <p className="mt-2">Loading property data...</p>
                     </div>
-                    <p className="mt-2">Loading property details...</p>
                 </div>
             </div>
         );
     }
-
-    if (error || !property) {
-        return (
-            <div className="container mt-4">
-                <div className="alert alert-danger" role="alert">
-                    {error || 'Property not found'}
-                </div>
-            </div>
-        );
-    }
-
-    const primaryImage = property.images.find(img => img.is_primary) || property.images[0];
 
     return (
-        <div className="container mt-4">
+        <div className="container-fluid py-4">
             <div className="row">
-                <div className="col-lg-8">
-                    <div className="card">
-                        <div className="card-body p-0">
-                            <img
-                                src={selectedImage || primaryImage?.image_path}
-                                alt={selectedImage ? "Selected" : primaryImage?.image_name}
-                                className="img-fluid w-100"
-                                style={{ height: '400px', objectFit: 'cover' }}
-                            />
-                            <div className="p-3">
-                                <div className="row g-2">
-                                    {property.images.map((image, index) => (
-                                        <div key={index} className="col-3">
-                                            <img
-                                                src={image.image_path}
-                                                alt={image.image_name}
-                                                className={`img-fluid w-100 cursor-pointer border ${image.is_primary ? 'border-primary border-3' : 'border-light'
-                                                    }`}
-                                                style={{ height: '80px', objectFit: 'cover', cursor: 'pointer' }}
-                                                onClick={() => setSelectedImage(image.image_path)}
-                                            />
+                <div className="col-12">
+                    <div className="card shadow">
+                        <div className="card-header bg-primary text-white">
+                            <h4 className="mb-0">Update Property</h4>
+                        </div>
+                        <div className="card-body">
+                            <form onSubmit={handleSubmit}>
+
+                                <div className="row mb-4">
+                                    <div className="col-12">
+                                        <h5 className="border-bottom pb-2">Basic Information</h5>
+                                    </div>
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Title *</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            name="title"
+                                            value={formData.title}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Property Type *</label>
+                                        <select
+                                            className="form-select"
+                                            name="property_type"
+                                            value={formData.property_type}
+                                            onChange={handleInputChange}
+                                            required
+                                        >
+                                            <option value="">Select Type</option>
+                                            <option value="house">House</option>
+                                            <option value="apartment">Apartment</option>
+                                            <option value="villa">Villa</option>
+                                            <option value="land">Land</option>
+                                            <option value="commercial">Commercial</option>
+                                        </select>
+                                    </div>
+                                    <div className="col-12 mb-3">
+                                        <label className="form-label">Description</label>
+                                        <textarea
+                                            className="form-control"
+                                            name="description"
+                                            rows={4}
+                                            value={formData.description}
+                                            onChange={handleInputChange}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Property Details */}
+                                <div className="row mb-4">
+                                    <div className="col-12">
+                                        <h5 className="border-bottom pb-2">Property Details</h5>
+                                    </div>
+                                    <div className="col-md-4 mb-3">
+                                        <label className="form-label">Status</label>
+                                        <select
+                                            className="form-select"
+                                            name="status"
+                                            value={formData.status}
+                                            onChange={handleInputChange}
+                                        >
+                                            <option value="available">Available</option>
+                                            <option value="sold">Sold</option>
+                                            <option value="rented">Rented</option>
+                                            <option value="pending">Pending</option>
+                                        </select>
+                                    </div>
+                                    <div className="col-md-4 mb-3">
+                                        <label className="form-label">Price *</label>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            name="price"
+                                            value={formData.price}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="col-md-4 mb-3">
+                                        <label className="form-label">Area (m²) *</label>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            name="area"
+                                            value={formData.area}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="col-md-3 mb-3">
+                                        <label className="form-label">Bedrooms</label>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            name="bedrooms"
+                                            value={formData.bedrooms}
+                                            onChange={handleInputChange}
+                                        />
+                                    </div>
+                                    <div className="col-md-3 mb-3">
+                                        <label className="form-label">Bathrooms</label>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            name="bathrooms"
+                                            value={formData.bathrooms}
+                                            onChange={handleInputChange}
+                                        />
+                                    </div>
+                                    <div className="col-md-3 mb-3">
+                                        <label className="form-label">Floors</label>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            name="floors"
+                                            value={formData.floors}
+                                            onChange={handleInputChange}
+                                        />
+                                    </div>
+                                    <div className="col-md-3 mb-3">
+                                        <label className="form-label">Year Built</label>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            name="year_built"
+                                            value={formData.year_built}
+                                            onChange={handleInputChange}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Location */}
+                                <div className="row mb-4">
+                                    <div className="col-12">
+                                        <h5 className="border-bottom pb-2">Location</h5>
+                                    </div>
+                                    <div className="col-md-12 mb-3">
+                                        <label className="form-label">Address *</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            name="address"
+                                            value={formData.address}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="col-md-4 mb-3">
+                                        <label className="form-label">City *</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            name="city"
+                                            value={formData.city}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="col-md-4 mb-3">
+                                        <label className="form-label">District</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            name="district"
+                                            value={formData.district}
+                                            onChange={handleInputChange}
+                                        />
+                                    </div>
+                                    <div className="col-md-4 mb-3">
+                                        <label className="form-label">Postal Code</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            name="postal_code"
+                                            value={formData.postal_code}
+                                            onChange={handleInputChange}
+                                        />
+                                    </div>
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Latitude</label>
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            className="form-control"
+                                            name="latitude"
+                                            value={formData.latitude}
+                                            onChange={handleInputChange}
+                                        />
+                                    </div>
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Longitude</label>
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            className="form-control"
+                                            name="longitude"
+                                            value={formData.longitude}
+                                            onChange={handleInputChange}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Features */}
+                                <div className="row mb-4">
+                                    <div className="col-12">
+                                        <h5 className="border-bottom pb-2">Features</h5>
+                                    </div>
+                                    <div className="col-12 mb-3">
+                                        <label className="form-label">Features</label>
+                                        <textarea
+                                            className="form-control"
+                                            name="features"
+                                            rows={3}
+                                            value={formData.features}
+                                            onChange={handleInputChange}
+                                            placeholder="e.g., Swimming pool, Garden, Parking, etc."
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Images */}
+                                <div className="row mb-4">
+                                    <div className="col-12">
+                                        <h5 className="border-bottom pb-2">Images</h5>
+                                    </div>
+
+                                    {/* Existing Images */}
+                                    {existingImages.length > 0 && (
+                                        <div className="col-12 mb-3">
+                                            <h6>Current Images</h6>
+                                            <div className="row">
+                                                {existingImages.map((image, index) => (
+                                                    <div key={index} className="col-md-3 col-sm-6 mb-3">
+                                                        <div className="card">
+                                                            <img
+                                                                src={image}
+                                                                className="card-img-top"
+                                                                alt={`Current ${index + 1}`}
+                                                                style={{ height: '150px', objectFit: 'cover' }}
+                                                            />
+                                                            <div className="card-body p-2">
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-danger btn-sm w-100"
+                                                                    onClick={() => removeExistingImage(index)}
+                                                                >
+                                                                    Remove
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                                    )}
 
-                <div className="col-lg-4">
-                    <div className="card">
-                        <div className="card-header">
-                            <h4 className="mb-0">{property.title}</h4>
-                        </div>
-                        <div className="card-body">
-                            <div className="mb-3">
-                                <span className={`badge ${property.status === 'For Sale' ? 'bg-success' : 'bg-primary'} mb-2`}>
-                                    {property.status}
-                                </span>
-                                <h3 className="text-primary">${property.price.toLocaleString()}</h3>
-                            </div>
-
-                            <div className="row mb-3">
-                                <div className="col-6">
-                                    <strong>Type:</strong><br />
-                                    {property.property_type}
-                                </div>
-                                <div className="col-6">
-                                    <strong>Area:</strong><br />
-                                    {property.area} m²
-                                </div>
-                            </div>
-
-                            <div className="row mb-3">
-                                <div className="col-4">
-                                    <strong>Bedrooms:</strong><br />
-                                    {property.bedrooms}
-                                </div>
-                                <div className="col-4">
-                                    <strong>Bathrooms:</strong><br />
-                                    {property.bathrooms}
-                                </div>
-                                <div className="col-4">
-                                    <strong>Floors:</strong><br />
-                                    {property.floors}
-                                </div>
-                            </div>
-
-                            <div className="mb-3">
-                                <strong>Year Built:</strong><br />
-                                {property.year_built}
-                            </div>
-
-                            <div className="mb-3">
-                                <strong>Features:</strong><br />
-                                <p className="mb-0">{property.features}</p>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    <div className="card mt-3">
-                        <div className="card-header">
-                            <h5 className="mb-0">Contact Information</h5>
-                        </div>
-                        <div className="card-body">
-                            <div className="mb-2">
-                                <strong>Name:</strong><br />
-                                {property.contact_name}
-                            </div>
-                            <div className="mb-2">
-                                <strong>Phone:</strong><br />
-                                <a href={`tel:${property.contact_phone}`} className="text-decoration-none">
-                                    {property.contact_phone}
-                                </a>
-                            </div>
-                            <div className="mb-3">
-                                <strong>Email:</strong><br />
-                                <a href={`mailto:${property.contact_email}`} className="text-decoration-none">
-                                    {property.contact_email}
-                                </a>
-                            </div>
-                            <button className="btn btn-primary w-100">Contact Agent</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div className="row mt-4">
-                <div className="col-12">
-                    <div className="card">
-                        <div className="card-header">
-                            <h5 className="mb-0">Description</h5>
-                        </div>
-                        <div className="card-body">
-                            <p>{property.description}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-            <div className="row mt-4">
-                <div className="col-12">
-                    <div className="card">
-                        <div className="card-header">
-                            <h5 className="mb-0">Location</h5>
-                        </div>
-                        <div className="card-body">
-                            <div className="row">
-                                <div className="col-md-6">
-                                    <div className="mb-2">
-                                        <strong>Address:</strong><br />
-                                        {property.address}
-                                    </div>
-                                    <div className="mb-2">
-                                        <strong>City:</strong><br />
-                                        {property.city}
-                                    </div>
-                                    <div className="mb-2">
-                                        <strong>District:</strong><br />
-                                        {property.district}
-                                    </div>
-                                    <div className="mb-2">
-                                        <strong>Postal Code:</strong><br />
-                                        {property.postal_code}
+                                    {/* Note about image uploads */}
+                                    <div className="col-12 mb-3">
+                                        <div className="alert alert-info">
+                                            <strong>Note:</strong> New image uploads are not available in JSON mode.
+                                            You can only remove existing images. To add new images, please use a separate image upload feature.
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="col-md-6">
-                                    <div className="mb-2">
-                                        <strong>Coordinates:</strong><br />
-                                        Lat: {property.latitude}, Lng: {property.longitude}
+
+                                {/* Contact Information */}
+                                <div className="row mb-4">
+                                    <div className="col-12">
+                                        <h5 className="border-bottom pb-2">Contact Information</h5>
                                     </div>
-                                    <button className="btn btn-outline-primary">
-                                        View on Map
-                                    </button>
+                                    <div className="col-md-4 mb-3">
+                                        <label className="form-label">Contact Name *</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            name="contact_name"
+                                            value={formData.contact_name}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="col-md-4 mb-3">
+                                        <label className="form-label">Contact Phone *</label>
+                                        <input
+                                            type="tel"
+                                            className="form-control"
+                                            name="contact_phone"
+                                            value={formData.contact_phone}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="col-md-4 mb-3">
+                                        <label className="form-label">Contact Email *</label>
+                                        <input
+                                            type="email"
+                                            className="form-control"
+                                            name="contact_email"
+                                            value={formData.contact_email}
+                                            onChange={handleInputChange}
+                                            required
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+
+                                {/* Submit Buttons */}
+                                <div className="row">
+                                    <div className="col-12">
+                                        <hr />
+                                        <div className="d-flex gap-2">
+                                            <button
+                                                type="submit"
+                                                className="btn btn-primary"
+                                                disabled={loading}
+                                            >
+                                                {loading ? (
+                                                    <>
+                                                        <span className="spinner-border spinner-border-sm me-2" />
+                                                        Updating...
+                                                    </>
+                                                ) : (
+                                                    'Update Property'
+                                                )}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn btn-secondary"
+                                                onClick={() => navigate('/properties')}
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -257,5 +551,5 @@ const PropertyDetail: React.FC = () => {
     );
 };
 
+export default UpdateProperty;
 
-export default PropertyDetail;

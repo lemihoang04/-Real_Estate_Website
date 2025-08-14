@@ -121,21 +121,13 @@ const AddProperty: React.FC = () => {
                 submitData.append('images[]', image); // key must be images[], type is File
             });
 
-            // API call would go here
-            console.log('Form data:', formData);
-            console.log('Images:', images);
-            try {
-                const response = await createProperty(submitData);
-                console.log('Property created successfully:', response);
-            } catch (error) {
-                console.error('Error creating property:', error);
-            }
-
-
-            alert('Property added successfully!');
+            const response = await createProperty(submitData);
+            console.log('Property created successfully:', response);
+            toast.success('Property added successfully!');
             navigate('/properties');
         } catch (error) {
-            alert('Error adding property');
+            console.error('Error creating property:', error);
+            toast.error('Error adding property');
         } finally {
             setLoading(false);
         }
@@ -490,5 +482,7 @@ const AddProperty: React.FC = () => {
         </div>
     );
 };
+
+
 
 export default AddProperty;

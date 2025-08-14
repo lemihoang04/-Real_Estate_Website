@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getProperties } from '../../services/apiService';
+import { toast } from 'react-toastify';
+import { getProperties, softDeleteProperty } from '../../services/apiService';
+import DeleteConfirmModal from '../../components/DeleteComfirmModal';
 
 interface Property {
     id: number;
@@ -32,15 +34,19 @@ const PropertiesList: React.FC = () => {
         itemsPerPage: 10
     });
 
-    // Search and filter states
+
     const [searchTerm, setSearchTerm] = useState('');
-    const [cityFilter, setCityFilter] = useState(''); // replace typeFilter with cityFilter
+    const [cityFilter, setCityFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [priceRange, setPriceRange] = useState({ min: '', max: '' });
     const [sortBy, setSortBy] = useState('created_at');
     const [sortOrder, setSortOrder] = useState('desc');
 
-    // Fetch properties with query params
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+
+
     const fetchProperties = async () => {
         setLoading(true);
         try {
@@ -52,9 +58,9 @@ const PropertiesList: React.FC = () => {
                 max_price: priceRange.max,
                 sort: sortBy,
                 order: sortOrder,
-                per_page: pagination.itemsPerPage // thêm per_page vào params
+                per_page: pagination.itemsPerPage
             };
-            // Remove empty params
+
             Object.keys(params).forEach(key => {
                 if (!params[key]) delete params[key];
             });
@@ -63,7 +69,6 @@ const PropertiesList: React.FC = () => {
             const data = response.data;
 
             setProperties(data.data);
-            console.log('Fetched properties:', data); // Debugging log
             setPagination(prev => ({
                 ...prev,
                 totalPages: data.meta.last_page,
@@ -78,7 +83,7 @@ const PropertiesList: React.FC = () => {
 
     useEffect(() => {
         fetchProperties();
-    }, [pagination.currentPage]); // update deps
+    }, [pagination.currentPage]);
 
     const handlePageChange = (page: number) => {
         setPagination(prev => ({ ...prev, currentPage: page }));
@@ -92,12 +97,40 @@ const PropertiesList: React.FC = () => {
 
     const resetFilters = () => {
         setSearchTerm('');
-        setCityFilter(''); // reset city
+        setCityFilter('');
         setStatusFilter('');
         setPriceRange({ min: '', max: '' });
         setSortBy('created_at');
         setSortOrder('desc');
         setPagination(prev => ({ ...prev, currentPage: 1 }));
+    };
+
+    const handleDeleteClick = (property: Property) => {
+        setSelectedProperty(property);
+        setShowDeleteModal(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!selectedProperty) return;
+
+        setDeleteLoading(true);
+        try {
+            await softDeleteProperty(selectedProperty.id);
+            await fetchProperties();
+            setShowDeleteModal(false);
+            setSelectedProperty(null);
+            toast.success(`Property "${selectedProperty.title}" has been deleted successfully!`);
+        } catch (error) {
+            console.error('Error deleting property:', error);
+            toast.error('Failed to delete property. Please try again.');
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
+
+    const handleDeleteCancel = () => {
+        setShowDeleteModal(false);
+        setSelectedProperty(null);
     };
 
     return (
@@ -108,7 +141,6 @@ const PropertiesList: React.FC = () => {
                     <Link to="/properties/create" className="btn btn-primary">Add New Property</Link>
                 </div>
 
-                {/* Search and Filters */}
                 <div className="card mb-4">
                     <div className="card-body">
                         <form onSubmit={handleSearch}>
@@ -182,7 +214,6 @@ const PropertiesList: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Sort Options */}
                 <div className="d-flex justify-content-between align-items-center mb-3">
                     <div>
                         <span className="me-3">Sort by:</span>
@@ -212,7 +243,6 @@ const PropertiesList: React.FC = () => {
                     </span>
                 </div>
 
-                {/* Properties Table */}
                 <div className="card">
                     <div className="card-body">
                         {loading ? (
@@ -266,7 +296,10 @@ const PropertiesList: React.FC = () => {
                                                         <Link to={`/properties/${property.id}/edit`} className="btn btn-outline-warning">
                                                             Edit
                                                         </Link>
-                                                        <button className="btn btn-outline-danger">
+                                                        <button
+                                                            className="btn btn-outline-danger"
+                                                            onClick={() => handleDeleteClick(property)}
+                                                        >
                                                             Delete
                                                         </button>
                                                     </div>
@@ -278,7 +311,6 @@ const PropertiesList: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Pagination */}
                         {pagination.totalPages > 1 && (
                             <nav className="mt-4">
                                 <ul className="pagination justify-content-center">
@@ -315,6 +347,17 @@ const PropertiesList: React.FC = () => {
                         )}
                     </div>
                 </div>
+
+                <DeleteConfirmModal
+                    show={showDeleteModal}
+                    title="Delete Property"
+                    message={`Are you sure you want to delete "${selectedProperty?.title}"? This action cannot be undone.`}
+                    onConfirm={handleDeleteConfirm}
+                    onCancel={handleDeleteCancel}
+                    loading={deleteLoading}
+                />
+
+                {showDeleteModal && <div className="modal-backdrop fade show"></div>}
             </div>
         </div>
     );
