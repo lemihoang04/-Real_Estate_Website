@@ -121,4 +121,39 @@ class PropertyController extends Controller
         $property->restore();
         return response()->json(['message' => 'Property restored successfully']);
     }
+    public function getDeleted(Request $request)
+    {
+        $query = Property::onlyTrashed()->with('images');
+
+        $sort = $request->get('sort', 'deleted_at');
+        $order = $request->get('order', 'desc'); 
+        $properties = $query->orderBy($sort, $order)->get();
+
+        $data = $properties->transform(function ($property) {
+            return [
+                'id'     => $property->id,
+                'title'  => $property->title,
+                'price'  => $property->price,
+                'property_type' => $property->property_type,
+                'city'   => $property->city,
+                'status' => $property->status,
+                'area'   => $property->area,
+                'bedrooms' => $property->bedrooms,
+                'bathrooms' => $property->bathrooms,
+                'deleted_at' => $property->deleted_at,
+                'images' => $property->images()->get()->map(function ($img) {
+                    return [
+                        'id'         => $img->id,
+                        'image_path' => $img->image_path,
+                        'is_primary' => $img->is_primary
+                    ];
+                })
+            ];
+        });
+
+        return response()->json([
+            'data' => $data
+        ]);
+    }
 }
+
