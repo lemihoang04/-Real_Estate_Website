@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../app/store';
-import { updateProperty, getPropertyById } from '../../services/apiService';
+import { updateProperty, getPropertyById, addPropertyImages, deletePropertyImage } from '../../services/apiService';
 import { toast } from 'react-toastify';
 
 interface PropertyFormData {
@@ -27,6 +27,12 @@ interface PropertyFormData {
     contact_phone: string;
     contact_email: string;
     updated_by: string;
+}
+
+interface ExistingImage {
+    id: number;
+    image_path: string;
+    image_name: string;
 }
 
 const UpdateProperty: React.FC = () => {
@@ -60,8 +66,7 @@ const UpdateProperty: React.FC = () => {
 
     const [newImages, setNewImages] = useState<File[]>([]);
     const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
-    const [existingImages, setExistingImages] = useState<string[]>([]);
-    const [imagesToDelete, setImagesToDelete] = useState<number[]>([]);
+    const [existingImages, setExistingImages] = useState<ExistingImage[]>([]);
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
 
@@ -107,11 +112,7 @@ const UpdateProperty: React.FC = () => {
                     updated_by: user?.id?.toString() || ''
                 });
 
-                // Add base URL to existing images using image_path
-                const imagesWithBaseUrl = (property.images || []).map((image: any) => {
-                    return `http://localhost:8000${image.image_path}`;
-                });
-                setExistingImages(imagesWithBaseUrl);
+                setExistingImages(property.images || []);
             } catch (error) {
                 console.error('Error loading property:', error);
                 toast.error('Error loading property data');
@@ -150,9 +151,33 @@ const UpdateProperty: React.FC = () => {
         setNewImagePreviews(prev => prev.filter((_, i) => i !== index));
     };
 
-    const removeExistingImage = (index: number) => {
-        setImagesToDelete(prev => [...prev, index]);
-        setExistingImages(prev => prev.filter((_, i) => i !== index));
+    const deleteExistingImage = async (imageId: number, index: number) => {
+        if (!id) return;
+
+        try {
+            await deletePropertyImage(Number(id), imageId);
+            setExistingImages(prev => prev.filter((_, i) => i !== index));
+            toast.success('Image deleted successfully');
+        } catch (error) {
+            console.error('Error deleting image:', error);
+            toast.error('Error deleting image');
+        }
+    };
+
+    const uploadNewImages = async () => {
+        if (!id || newImages.length === 0) return;
+
+        try {
+            await addPropertyImages(Number(id), newImages);
+            setNewImages([]);
+            setNewImagePreviews([]);
+
+            const response = await getPropertyById(Number(id));
+            setExistingImages(response.data.images || []);
+        } catch (error) {
+            console.error('Error uploading images:', error);
+            toast.error('Error uploading images');
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -162,20 +187,16 @@ const UpdateProperty: React.FC = () => {
         setLoading(true);
 
         try {
+            if (newImages.length > 0) {
+                await uploadNewImages();
+            }
+
             const submitData = {
                 ...formData,
-                updated_by: user?.id?.toString() || '',
-                images_to_delete: imagesToDelete.length > 0 ? imagesToDelete : undefined
+                updated_by: user?.id?.toString() || ''
             };
 
-            // Remove undefined values
-            // Object.keys(submitData).forEach(key => {
-            //     if (submitData[key] === undefined) {
-            //         delete submitData[key];
-            //     }
-            // });
-
-            const response = await updateProperty(Number(id), submitData);
+            await updateProperty(Number(id), submitData);
             toast.success('Property updated successfully!');
             navigate('/properties');
         } catch (error) {
@@ -266,7 +287,6 @@ const UpdateProperty: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Property Details */}
                                 <div className="row mb-4">
                                     <div className="col-12">
                                         <h5 className="border-bottom pb-2">Property Details</h5>
@@ -349,7 +369,6 @@ const UpdateProperty: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Location */}
                                 <div className="row mb-4">
                                     <div className="col-12">
                                         <h5 className="border-bottom pb-2">Location</h5>
@@ -420,7 +439,6 @@ const UpdateProperty: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Features */}
                                 <div className="row mb-4">
                                     <div className="col-12">
                                         <h5 className="border-bottom pb-2">Features</h5>
@@ -438,31 +456,70 @@ const UpdateProperty: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Images */}
                                 <div className="row mb-4">
                                     <div className="col-12">
                                         <h5 className="border-bottom pb-2">Images</h5>
                                     </div>
 
-                                    {/* Existing Images */}
                                     {existingImages.length > 0 && (
                                         <div className="col-12 mb-3">
                                             <h6>Current Images</h6>
                                             <div className="row">
                                                 {existingImages.map((image, index) => (
-                                                    <div key={index} className="col-md-3 col-sm-6 mb-3">
+                                                    <div key={image.id} className="col-md-3 col-sm-6 mb-3">
                                                         <div className="card">
                                                             <img
-                                                                src={image}
+                                                                src={`http://localhost:8000${image.image_path}`}
                                                                 className="card-img-top"
-                                                                alt={`Current ${index + 1}`}
+                                                                alt={image.image_name}
                                                                 style={{ height: '150px', objectFit: 'cover' }}
                                                             />
                                                             <div className="card-body p-2">
                                                                 <button
                                                                     type="button"
                                                                     className="btn btn-danger btn-sm w-100"
-                                                                    onClick={() => removeExistingImage(index)}
+                                                                    onClick={() => deleteExistingImage(image.id, index)}
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="col-12 mb-3">
+                                        <h6>Add New Images</h6>
+                                        <input
+                                            type="file"
+                                            className="form-control"
+                                            multiple
+                                            accept="image/*"
+                                            onChange={handleNewImageChange}
+                                        />
+                                        <small className="text-muted">Select multiple images to upload</small>
+                                    </div>
+
+                                    {newImagePreviews.length > 0 && (
+                                        <div className="col-12 mb-3">
+                                            <h6>New Images to Upload</h6>
+                                            <div className="row">
+                                                {newImagePreviews.map((preview, index) => (
+                                                    <div key={index} className="col-md-3 col-sm-6 mb-3">
+                                                        <div className="card">
+                                                            <img
+                                                                src={preview}
+                                                                className="card-img-top"
+                                                                alt={`New ${index + 1}`}
+                                                                style={{ height: '150px', objectFit: 'cover' }}
+                                                            />
+                                                            <div className="card-body p-2">
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-warning btn-sm w-100"
+                                                                    onClick={() => removeNewImage(index)}
                                                                 >
                                                                     Remove
                                                                 </button>
@@ -473,17 +530,8 @@ const UpdateProperty: React.FC = () => {
                                             </div>
                                         </div>
                                     )}
-
-                                    {/* Note about image uploads */}
-                                    <div className="col-12 mb-3">
-                                        <div className="alert alert-info">
-                                            <strong>Note:</strong> New image uploads are not available in JSON mode.
-                                            You can only remove existing images. To add new images, please use a separate image upload feature.
-                                        </div>
-                                    </div>
                                 </div>
 
-                                {/* Contact Information */}
                                 <div className="row mb-4">
                                     <div className="col-12">
                                         <h5 className="border-bottom pb-2">Contact Information</h5>
@@ -523,7 +571,6 @@ const UpdateProperty: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Submit Buttons */}
                                 <div className="row">
                                     <div className="col-12">
                                         <hr />
@@ -560,6 +607,7 @@ const UpdateProperty: React.FC = () => {
         </div>
     );
 };
+
 
 export default UpdateProperty;
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\PropertyImage;
+use App\Models\Property;
 
 
 class PropertyImageController extends Controller

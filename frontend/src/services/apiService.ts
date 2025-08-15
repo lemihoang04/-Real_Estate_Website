@@ -81,4 +81,33 @@ const getDeleted = async (): Promise<any> => {
     }
 };
 
-export { getProperties, createProperty, getPropertyById, updateProperty, softDeleteProperty, restoreProperty, getDeleted };
+const addPropertyImages = async (propertyId: number, images: FileList | File[]) => {
+    try {
+        const formData = new FormData();
+        Array.from(images).forEach((file) => {
+            formData.append('images[]', file);
+        });
+
+        const response = await api.post(`/properties/${propertyId}/images`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
+        return response;
+    } catch (error) {
+        console.error("Error adding property images:", error);
+        throw error;
+    }
+};
+
+const deletePropertyImage = async (propertyId: number, imageId: number) => {
+    try {
+        const response = await api.delete(`/properties/${propertyId}/images/${imageId}`);
+        return response;
+    } catch (error) {
+        console.error("Error deleting property image:", error);
+        throw error;
+    }
+};
+
+export { getProperties, createProperty, getPropertyById, updateProperty, softDeleteProperty, restoreProperty, getDeleted, addPropertyImages, deletePropertyImage };
