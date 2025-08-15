@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getDeleted, restoreProperty } from '../../services/apiService';
+import { toast } from 'react-toastify';
 
 interface Property {
     id: number;
@@ -44,8 +45,11 @@ const SoftDeletedPropertyList: React.FC = () => {
 
     const handleRestore = async (id: number) => {
         try {
-            await restoreProperty(id);
-            setDeletedProperties(deletedProperties.filter((property: Property) => property.id !== id));
+            const response = await restoreProperty(id);
+            if (response.status === 200) {
+                setDeletedProperties(deletedProperties.filter((property: Property) => property.id !== id));
+                toast.success("Property restored successfully");
+            }
         } catch (error) {
             console.error("Error restoring property:", error);
         }

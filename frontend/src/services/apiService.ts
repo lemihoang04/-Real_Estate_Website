@@ -63,7 +63,7 @@ const softDeleteProperty = async (id: number) => {
 
 const restoreProperty = async (id: number) => {
     try {
-        const response = await api.put(`/properties/${id}/restore`);
+        const response = await api.post(`/properties/${id}/restore`);
         return response;
     } catch (error) {
         console.error("Error restoring property:", error);

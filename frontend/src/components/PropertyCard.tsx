@@ -60,9 +60,14 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete }) => {
                 </div>
 
                 <div className="card-body d-flex flex-column">
-                    <h5 className="card-title text-truncate" title={property.title}>
-                        {property.title}
-                    </h5>
+                    <Link
+                        to={`/properties/${property.id}`}
+                        className="text-decoration-none"
+                    >
+                        <h5 className="card-title text-truncate text-dark" title={property.title}>
+                            {property.title}
+                        </h5>
+                    </Link>
 
                     <p className="card-text text-primary fw-bold fs-5 mb-2">
                         ${property.price.toLocaleString()}
@@ -95,30 +100,24 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete }) => {
                     </div>
 
                     <div className="mt-auto">
-                        <div className="btn-group w-100" role="group">
+                        <div className="d-flex gap-2">
                             <Link
                                 to={`/properties/${property.id}`}
-                                className="btn btn-outline-info btn-sm flex-fill"
-                                title="View Details"
+                                className="btn btn-info btn-sm"
                             >
-                                <i className="bi bi-eye me-1"></i>
-                                View
+                                <i className="bi bi-eye"></i> View
                             </Link>
                             <Link
-                                to={`/properties/${property.id}/edit`}
-                                className="btn btn-outline-warning btn-sm flex-fill"
-                                title="Edit Property"
+                                to={`/properties/edit/${property.id}`}
+                                className="btn btn-warning btn-sm"
                             >
-                                <i className="bi bi-pencil me-1"></i>
-                                Edit
+                                <i className="bi bi-pencil"></i> Edit
                             </Link>
                             <button
-                                className="btn btn-outline-danger btn-sm flex-fill"
+                                className="btn btn-danger btn-sm"
                                 onClick={() => onDelete(property)}
-                                title="Delete Property"
                             >
-                                <i className="bi bi-trash me-1"></i>
-                                Delete
+                                <i className="bi bi-trash"></i> Delete
                             </button>
                         </div>
                     </div>
@@ -127,5 +126,6 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete }) => {
         </div>
     );
 };
+
 
 export default PropertyCard;

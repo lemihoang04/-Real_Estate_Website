@@ -56,15 +56,16 @@ const ClientRoutes = () => {
                             </ProtectedRoute>
                         }
                     />
+                    <Route
+                        path="/properties/deleted"
+                        element={
+                            <ProtectedRoute>
+                                <SoftDeletedPropertyList />
+                            </ProtectedRoute>
+                        }
+                    />
                 </Route>
-                <Route
-                    path="/properties/deleted"
-                    element={
-                        <ProtectedRoute>
-                            <SoftDeletedPropertyList />
-                        </ProtectedRoute>
-                    }
-                />
+
                 <Route path="/login" element={<Login />} />
             </Routes>
         </Router>

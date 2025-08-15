@@ -60,6 +60,7 @@ const PropertiesList: React.FC = () => {
         try {
             const params: Record<string, any> = {
                 page: pagination.currentPage,
+                search: searchTerm,
                 city: cityFilter,
                 status: statusFilter,
                 min_price: priceRange.min,
