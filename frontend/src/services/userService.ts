@@ -18,7 +18,20 @@ const LoginService = (data: Record<string, any>): Promise<any> => {
         });
 };
 
+const LogoutService = (): Promise<any> => {
+    return axios
+        .post("/logout")
+        .then((response) => {
+            console.log("Logout response:", response);
+            return response;
+        })
+        .catch((error) => {
+            console.error("Logout error:", error);
+            throw error;
+        });
+};
 
 export {
     LoginService,
+    LogoutService
 };

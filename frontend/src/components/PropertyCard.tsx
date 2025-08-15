@@ -30,7 +30,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete }) => {
     const primaryImage = property.images?.find(img => img.is_primary === 1);
     const imageUrl = primaryImage
         ? `http://localhost:8000${primaryImage.image_path}`
-        : '/images/placeholder-property.jpg';
+        : 'https://skhcn.hatinh.gov.vn/img/no-image.png';
 
     const getStatusBadgeClass = (status: string) => {
         switch (status) {
@@ -51,7 +51,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete }) => {
                         alt={property.title}
                         style={{ height: '200px', objectFit: 'cover' }}
                         onError={(e) => {
-                            e.currentTarget.src = '/images/placeholder-property.jpg';
+                            e.currentTarget.src = 'https://skhcn.hatinh.gov.vn/img/no-image.png';
                         }}
                     />
                     <span className={`badge ${getStatusBadgeClass(property.status)} position-absolute top-0 end-0 m-2`}>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { LoginService } from '../../services/userService';
 import { useDispatch } from "react-redux";
 import { setCredentials } from "../../features/auth/authSlice";

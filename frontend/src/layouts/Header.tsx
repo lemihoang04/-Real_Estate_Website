@@ -1,7 +1,30 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { LogoutService } from '../services/userService';
+import { toast } from 'react-toastify';
+import { useDispatch } from "react-redux";
+import { logout } from "../features/auth/authSlice";
+import { time } from 'console';
 
 const Header: React.FC = () => {
+    const dispatch = useDispatch();
+
+    const handleLogout = async () => {
+        try {
+            const response = await LogoutService();
+            if (response.status === 200) {
+                toast.success("Logout successful");
+                setTimeout(() => {
+                    dispatch(logout());
+                }, 1000);
+            }
+        } catch (error) {
+            console.error("Logout failed:", error);
+            toast.error("Logout failed");
+        }
+
+    };
+
     return (
         <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm border-bottom">
             <div className="container">
@@ -48,7 +71,7 @@ const Header: React.FC = () => {
                     </ul>
 
                     <div className="navbar-nav">
-                        <Link className="nav-link d-flex align-items-center text-danger fw-medium" to="/login">
+                        <Link className="nav-link d-flex align-items-center text-danger fw-medium" to="/login" onClick={handleLogout}>
                             <i className="bi bi-box-arrow-right me-1"></i>
                             Logout
                         </Link>

@@ -12,8 +12,17 @@ class PropertyController extends Controller
 {
     $query = Property::with('images');
 
-    if ($request->has('city')) {
-        $query->where('city', $request->city);
+    if ($request->has('search') && !empty($request->search)) {
+        $searchTerm = $request->search;
+        $query->where(function($q) use ($searchTerm) {
+            $q->where('title', 'LIKE', "%{$searchTerm}%")
+              ->orWhere('description', 'LIKE', "%{$searchTerm}%")
+              ->orWhere('address', 'LIKE', "%{$searchTerm}%");
+        });
+    }
+
+    if ($request->has('city') && !empty($request->city)) {
+        $query->where('city', 'LIKE', "%{$request->city}%");
     }
 
     if ($request->has('status')) {

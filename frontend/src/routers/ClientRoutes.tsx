@@ -49,7 +49,7 @@ const ClientRoutes = () => {
                     />
 
                     <Route
-                        path="/properties/:id/edit"
+                        path="/properties/edit/:id"
                         element={
                             <ProtectedRoute>
                                 <UpdateProperty />

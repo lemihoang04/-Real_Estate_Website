@@ -153,7 +153,7 @@ const AddProperty: React.FC = () => {
                         </div>
                         <div className="card-body">
                             <form onSubmit={handleSubmit}>
-                                {/* Basic Information */}
+
                                 <div className="row mb-4">
                                     <div className="col-12">
                                         <h5 className="border-bottom pb-2">Basic Information</h5>
@@ -198,7 +198,6 @@ const AddProperty: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Property Details */}
                                 <div className="row mb-4">
                                     <div className="col-12">
                                         <h5 className="border-bottom pb-2">Property Details</h5>
@@ -281,7 +280,7 @@ const AddProperty: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Location */}
+
                                 <div className="row mb-4">
                                     <div className="col-12">
                                         <h5 className="border-bottom pb-2">Location</h5>
@@ -352,7 +351,6 @@ const AddProperty: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Features */}
                                 <div className="row mb-4">
                                     <div className="col-12">
                                         <h5 className="border-bottom pb-2">Features</h5>
@@ -370,7 +368,6 @@ const AddProperty: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Images */}
                                 <div className="row mb-4">
                                     <div className="col-12">
                                         <h5 className="border-bottom pb-2">Images</h5>
@@ -415,7 +412,6 @@ const AddProperty: React.FC = () => {
                                     )}
                                 </div>
 
-                                {/* Contact Information */}
                                 <div className="row mb-4">
                                     <div className="col-12">
                                         <h5 className="border-bottom pb-2">Contact Information</h5>
