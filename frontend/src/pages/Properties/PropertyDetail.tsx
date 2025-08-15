@@ -89,6 +89,7 @@ const PropertyDetail: React.FC = () => {
     }
 
     const primaryImage = property.images.find(img => img.is_primary) || property.images[0];
+    const currentDisplayedImage = selectedImage || `http://localhost:8000${primaryImage?.image_path}`;
 
     return (
         <div className="container mt-4">
@@ -109,25 +110,30 @@ const PropertyDetail: React.FC = () => {
                     <div className="card">
                         <div className="card-body p-0">
                             <img
-                                src={selectedImage || `http://localhost:8000${primaryImage?.image_path}`}
+                                src={currentDisplayedImage}
                                 alt={selectedImage ? "Selected" : primaryImage?.image_name}
                                 className="img-fluid w-100"
                                 style={{ height: '400px', objectFit: 'cover' }}
                             />
                             <div className="p-3">
                                 <div className="row g-2">
-                                    {property.images.map((image, index) => (
-                                        <div key={index} className="col-3">
-                                            <img
-                                                src={`http://localhost:8000${image.image_path}`}
-                                                alt={image.image_name}
-                                                className={`img-fluid w-100 cursor-pointer border ${image.is_primary ? 'border-primary border-3' : 'border-light'
-                                                    }`}
-                                                style={{ height: '80px', objectFit: 'cover', cursor: 'pointer' }}
-                                                onClick={() => setSelectedImage(`http://localhost:8000${image.image_path}`)}
-                                            />
-                                        </div>
-                                    ))}
+                                    {property.images.map((image, index) => {
+                                        const imageUrl = `http://localhost:8000${image.image_path}`;
+                                        const isCurrentImage = currentDisplayedImage === imageUrl;
+
+                                        return (
+                                            <div key={index} className="col-3">
+                                                <img
+                                                    src={imageUrl}
+                                                    alt={image.image_name}
+                                                    className={`img-fluid w-100 cursor-pointer border ${isCurrentImage ? 'border-primary border-3' : 'border-light'
+                                                        }`}
+                                                    style={{ height: '80px', objectFit: 'cover', cursor: 'pointer' }}
+                                                    onClick={() => setSelectedImage(imageUrl)}
+                                                />
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
