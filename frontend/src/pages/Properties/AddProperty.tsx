@@ -137,6 +137,16 @@ const AddProperty: React.FC = () => {
         <div className="container-fluid py-4">
             <div className="row">
                 <div className="col-12">
+                    <div className="mb-3">
+                        <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            onClick={() => navigate('/properties')}
+                        >
+                            <i className="bi bi-arrow-left me-1"></i>
+                            Back to Properties
+                        </button>
+                    </div>
                     <div className="card shadow">
                         <div className="card-header bg-primary text-white">
                             <h4 className="mb-0">Add New Property</h4>

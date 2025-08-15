@@ -7,6 +7,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import AddProperty from "../pages/Properties/AddProperty";
 import PropertyDetail from "../pages/Properties/PropertyDetail";
 import UpdateProperty from "../pages/Properties/UpdateProperty";
+import SoftDeletedPropertyList from "../pages/Properties/SoftDeletedPropertyList";
 
 const ClientRoutes = () => {
     return (
@@ -56,6 +57,14 @@ const ClientRoutes = () => {
                         }
                     />
                 </Route>
+                <Route
+                    path="/properties/deleted"
+                    element={
+                        <ProtectedRoute>
+                            <SoftDeletedPropertyList />
+                        </ProtectedRoute>
+                    }
+                />
                 <Route path="/login" element={<Login />} />
             </Routes>
         </Router>

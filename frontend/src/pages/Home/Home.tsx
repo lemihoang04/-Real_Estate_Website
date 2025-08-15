@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 const Home: React.FC = () => {
     return (
         <div className="container-fluid">
-            {/* Dashboard Header */}
+
             <div className="bg-success text-white py-4">
                 <div className="container">
                     <h1 className="h2 mb-2">Real Estate Management System</h1>
@@ -12,7 +12,6 @@ const Home: React.FC = () => {
                 </div>
             </div>
 
-            {/* CRUD Operations Section */}
             <div className="container py-5">
                 <div className="row">
                     <div className="col-md-3 mb-4">
@@ -38,10 +37,10 @@ const Home: React.FC = () => {
                     <div className="col-md-3 mb-4">
                         <div className="card text-center h-100">
                             <div className="card-body">
-                                <i className="fas fa-edit fa-3x text-warning mb-3"></i>
-                                <h5 className="card-title">Update Properties</h5>
-                                <p className="card-text">Edit existing property information</p>
-                                <Link to="/properties" className="btn btn-warning">Manage</Link>
+                                <i className="fas fa-archive fa-3x text-secondary mb-3"></i>
+                                <h5 className="card-title">Soft Deleted Properties</h5>
+                                <p className="card-text">View and restore deleted property listings</p>
+                                <Link to="/properties/deleted" className="btn btn-secondary">View Deleted</Link>
                             </div>
                         </div>
                     </div>

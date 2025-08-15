@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getPropertyById } from '../../services/apiService';
 
 interface Image {
@@ -34,6 +34,7 @@ interface PropertyData {
 
 const PropertyDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const [selectedImage, setSelectedImage] = useState<string>('');
     const [property, setProperty] = useState<PropertyData | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
@@ -91,6 +92,17 @@ const PropertyDetail: React.FC = () => {
 
     return (
         <div className="container mt-4">
+            <div className="mb-3">
+                <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => navigate('/properties')}
+                >
+                    <i className="bi bi-arrow-left me-1"></i>
+                    Back to Properties
+                </button>
+            </div>
+
             <div className="row">
                 {/* Image Gallery */}
                 <div className="col-lg-8">

@@ -3,6 +3,13 @@ import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getProperties, softDeleteProperty } from '../../services/apiService';
 import DeleteConfirmModal from '../../components/DeleteComfirmModal';
+import PropertyCard from '../../components/PropertyCard';
+
+interface PropertyImage {
+    id: number;
+    image_path: string;
+    is_primary: number;
+}
 
 interface Property {
     id: number;
@@ -15,6 +22,7 @@ interface Property {
     bathrooms: number;
     area: number;
     createdAt: string;
+    images?: PropertyImage[];
 }
 
 interface PaginationInfo {
@@ -83,7 +91,7 @@ const PropertiesList: React.FC = () => {
 
     useEffect(() => {
         fetchProperties();
-    }, [pagination.currentPage]);
+    }, [pagination.currentPage, sortBy, sortOrder]);
 
     const handlePageChange = (page: number) => {
         setPagination(prev => ({ ...prev, currentPage: page }));
@@ -138,7 +146,10 @@ const PropertiesList: React.FC = () => {
             <div className="container-fluid py-4">
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <h2>Properties Management</h2>
-                    <Link to="/properties/create" className="btn btn-primary">Add New Property</Link>
+                    <Link to="/properties/create" className="btn btn-primary">
+                        <i className="bi bi-plus-circle me-2"></i>
+                        Add New Property
+                    </Link>
                 </div>
 
                 <div className="card mb-4">
@@ -243,71 +254,34 @@ const PropertiesList: React.FC = () => {
                     </span>
                 </div>
 
-                <div className="card">
-                    <div className="card-body">
-                        {loading ? (
-                            <div className="text-center py-4">
-                                <div className="spinner-border" role="status">
-                                    <span className="visually-hidden">Loading...</span>
-                                </div>
+                {loading ? (
+                    <div className="text-center py-5">
+                        <div className="spinner-border" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                        <p className="mt-2 text-muted">Loading properties...</p>
+                    </div>
+                ) : (
+                    <>
+                        {properties.length === 0 ? (
+                            <div className="text-center py-5">
+                                <i className="bi bi-house-x display-1 text-muted"></i>
+                                <h4 className="mt-3 text-muted">No Properties Found</h4>
+                                <p className="text-muted">Try adjusting your search criteria or add a new property.</p>
+                                <Link to="/properties/create" className="btn btn-primary">
+                                    <i className="bi bi-plus-circle me-2"></i>
+                                    Add New Property
+                                </Link>
                             </div>
                         ) : (
-                            <div className="table-responsive">
-                                <table className="table table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Title</th>
-                                            <th>Type</th>
-                                            <th>Price</th>
-                                            <th>Status</th>
-                                            <th>Location</th>
-                                            <th>Bedrooms</th>
-                                            <th>Bathrooms</th>
-                                            <th>Area (m²)</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {properties.map((property) => (
-                                            <tr key={property.id}>
-                                                <td>{property.id}</td>
-                                                <td>{property.title}</td>
-                                                <td>
-                                                    <span className="badge bg-secondary">{property.property_type}</span>
-                                                </td>
-                                                <td>${property.price.toLocaleString()}</td>
-                                                <td>
-                                                    <span className={`badge ${property.status === 'available' ? 'bg-success' :
-                                                        property.status === 'sold' ? 'bg-danger' : 'bg-warning'
-                                                        }`}>
-                                                        {property.status}
-                                                    </span>
-                                                </td>
-                                                <td>{property.city}</td>
-                                                <td>{property.bedrooms}</td>
-                                                <td>{property.bathrooms}</td>
-                                                <td>{property.area}</td>
-                                                <td>
-                                                    <div className="btn-group btn-group-sm">
-                                                        <Link to={`/properties/${property.id}`} className="btn btn-outline-info">
-                                                            View
-                                                        </Link>
-                                                        <Link to={`/properties/${property.id}/edit`} className="btn btn-outline-warning">
-                                                            Edit
-                                                        </Link>
-                                                        <button
-                                                            className="btn btn-outline-danger"
-                                                            onClick={() => handleDeleteClick(property)}
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            <div className="row">
+                                {properties.map((property) => (
+                                    <PropertyCard
+                                        key={property.id}
+                                        property={property}
+                                        onDelete={handleDeleteClick}
+                                    />
+                                ))}
                             </div>
                         )}
 
@@ -320,6 +294,7 @@ const PropertiesList: React.FC = () => {
                                             onClick={() => handlePageChange(pagination.currentPage - 1)}
                                             disabled={pagination.currentPage === 1}
                                         >
+                                            <i className="bi bi-chevron-left"></i>
                                             Previous
                                         </button>
                                     </li>
@@ -340,13 +315,14 @@ const PropertiesList: React.FC = () => {
                                             disabled={pagination.currentPage === pagination.totalPages}
                                         >
                                             Next
+                                            <i className="bi bi-chevron-right"></i>
                                         </button>
                                     </li>
                                 </ul>
                             </nav>
                         )}
-                    </div>
-                </div>
+                    </>
+                )}
 
                 <DeleteConfirmModal
                     show={showDeleteModal}
@@ -365,4 +341,5 @@ const PropertiesList: React.FC = () => {
 
 
 export default PropertiesList;
+
 

@@ -70,4 +70,15 @@ const restoreProperty = async (id: number) => {
         throw error;
     }
 };
-export { getProperties, createProperty, getPropertyById, updateProperty, softDeleteProperty, restoreProperty };
+
+const getDeleted = async (): Promise<any> => {
+    try {
+        const response = await api.get("/properties_deleted");
+        return response;
+    } catch (error) {
+        console.error("Error fetching deleted properties:", error);
+        throw error;
+    }
+};
+
+export { getProperties, createProperty, getPropertyById, updateProperty, softDeleteProperty, restoreProperty, getDeleted };
